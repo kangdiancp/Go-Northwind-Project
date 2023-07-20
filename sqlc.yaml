@@ -2,7 +2,7 @@
 version: '1'
 packages:
   - name: models
-    path: db-generator/gen
+    path: db-generator/gen5
     schema: db-generator/
     queries: db-generator/
     engine: postgresql
