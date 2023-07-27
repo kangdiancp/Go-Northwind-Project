@@ -12,33 +12,30 @@ import (
 )
 
 type HttpServer struct {
-	config             *viper.Viper
-	router             *gin.Engine
-	categoryController *controllers.CategoryController
+	config *viper.Viper
+	router *gin.Engine
+	//categoryController *controllers.CategoryController
+	ControllerManager controllers.ControllerManager
 }
 
 func InitHttpServer(config *viper.Viper, dbHandler *sql.DB) HttpServer {
 
-	categoryRepository := repositories.NewCategoryRepository(dbHandler)
+	repositoryManager := repositories.NewRepositoryManager(dbHandler)
 
-	categoryService := services.NewCategoryService(categoryRepository)
+	serviceManager := services.NewServiceManager(repositoryManager)
 
-	categoryController := controllers.NewCategoryController(categoryService)
-
+	controllerManager := controllers.NewControllerManager(serviceManager)
+	//create object router only one
 	router := gin.Default()
 
-	//router endpoint
-	router.GET("/category", categoryController.GetListCategory)
-	router.GET("/category/:id", categoryController.GetCategory)
-	router.POST("/category", categoryController.CreateCategory)
-
-	router.PUT("/category/:id", categoryController.UpdateCategory)
-	router.DELETE("/category/:id", categoryController.DeleteCategory)
+	InitRouter(router, controllerManager)
+	//InitRouterBootcamp(router, controllerManager)
+	//InitRouterJobHire(router, controllerManager)
 
 	return HttpServer{
-		config:             config,
-		router:             router,
-		categoryController: categoryController,
+		config:            config,
+		router:            router,
+		ControllerManager: *controllerManager,
 	}
 
 }
