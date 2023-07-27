@@ -14,6 +14,8 @@ func InitRouter(routers *gin.Engine, controllerMgr *controllers.ControllerManage
 		categoryRoute.GET("/:id", controllerMgr.CategoryController.GetCategory)
 		categoryRoute.POST("/", controllerMgr.CategoryController.CreateCategory)
 
+		categoryRoute.POST("/withProduct", controllerMgr.CategoryController.CreateCategoryWithProduct)
+
 		categoryRoute.PUT("/:id", controllerMgr.CategoryController.UpdateCategory)
 		categoryRoute.DELETE("/:id", controllerMgr.CategoryController.DeleteCategory)
 	}

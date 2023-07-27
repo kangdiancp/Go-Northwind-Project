@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"codeid.northwind/models"
+	"codeid.northwind/models/features"
 )
 
 const createCategory = `-- name: CreateCategory :one
@@ -63,11 +64,12 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 
 const listCategories = `-- name: ListCategories :many
 SELECT category_id, category_name, description, picture FROM Categories
-ORDER BY category_name
+ORDER BY category_id
+limit $1 offset $2
 `
 
-func (q *Queries) ListCategories(ctx context.Context) ([]models.Category, error) {
-	rows, err := q.db.QueryContext(ctx, listCategories)
+func (q *Queries) ListCategories(ctx context.Context, metadata *features.Metadata) ([]models.Category, error) {
+	rows, err := q.db.QueryContext(ctx, listCategories, metadata.PageSize, metadata.PageNo)
 	if err != nil {
 		return nil, err
 	}

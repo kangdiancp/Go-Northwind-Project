@@ -4,27 +4,36 @@ import (
 	"net/http"
 
 	"codeid.northwind/models"
+	"codeid.northwind/models/features"
 	"codeid.northwind/repositories"
 	"codeid.northwind/repositories/dbContext"
 	"github.com/gin-gonic/gin"
 )
 
 type CategoryService struct {
-	categoryRepository *repositories.CategoryRepository
+	//replace, direct access to repositoryManager
+	// before :
+	//categoryRepository *repositories.CategoryRepository
+
+	// after :
+	repositoryManager *repositories.RepositoryManager
 }
 
-func NewCategoryService(categoryRepository *repositories.CategoryRepository) *CategoryService {
+func NewCategoryService(repoMgr *repositories.RepositoryManager) *CategoryService {
+	//replace, direct access pointer to repositoryManager
 	return &CategoryService{
-		categoryRepository: categoryRepository,
+		repositoryManager: repoMgr,
 	}
 }
 
-func (cs CategoryService) GetListCategory(ctx *gin.Context) ([]*models.Category, *models.ResponseError) {
-	return cs.categoryRepository.GetListCategory(ctx)
+func (cs CategoryService) GetListCategory(ctx *gin.Context, metadata *features.Metadata) ([]*models.Category, *models.ResponseError) {
+	//replace, direct access to repositoryManager
+	//return cs.categoryRepository.GetListCategory(ctx)
+	return cs.repositoryManager.CategoryRepository.GetListCategory(ctx, metadata)
 }
 
 func (cs CategoryService) GetCategory(ctx *gin.Context, id int64) (*models.Category, *models.ResponseError) {
-	return cs.categoryRepository.GetCategory(ctx, id)
+	return cs.repositoryManager.CategoryRepository.GetCategory(ctx, id)
 }
 
 func (cs CategoryService) CreateCategory(ctx *gin.Context, categoryParams *dbContext.CreateCategoryParams) (*models.Category, *models.ResponseError) {
@@ -33,7 +42,7 @@ func (cs CategoryService) CreateCategory(ctx *gin.Context, categoryParams *dbCon
 		return nil, responseErr
 	}
 
-	return cs.categoryRepository.CreateCategory(ctx, categoryParams)
+	return cs.repositoryManager.CategoryRepository.CreateCategory(ctx, categoryParams)
 }
 
 func (cs CategoryService) UpdateCategory(ctx *gin.Context, categoryParams *dbContext.CreateCategoryParams, id int64) *models.ResponseError {
@@ -42,11 +51,11 @@ func (cs CategoryService) UpdateCategory(ctx *gin.Context, categoryParams *dbCon
 		return responseErr
 	}
 
-	return cs.categoryRepository.UpdateCategory(ctx, categoryParams)
+	return cs.repositoryManager.CategoryRepository.UpdateCategory(ctx, categoryParams)
 }
 
 func (cs CategoryService) DeleteCategory(ctx *gin.Context, id int64) *models.ResponseError {
-	return cs.categoryRepository.DeleteCategory(ctx, id)
+	return cs.repositoryManager.CategoryRepository.DeleteCategory(ctx, id)
 }
 
 func validateCategory(categoryParams *dbContext.CreateCategoryParams) *models.ResponseError {
@@ -66,4 +75,35 @@ func validateCategory(categoryParams *dbContext.CreateCategoryParams) *models.Re
 
 	return nil
 
+}
+
+func (cs CategoryService) CreateCateProductDto(ctx *gin.Context, categoryWithProductDto *models.CreateCategoryProductDto) (*models.Category, *models.ResponseError) {
+
+	err := repositories.BeginTransaction(cs.repositoryManager)
+	if err != nil {
+		return nil, &models.ResponseError{
+			Message: "Failed to start transaction",
+			Status:  http.StatusBadRequest,
+		}
+	}
+	//first query statement
+	response, responseErr := cs.CreateCategory(ctx, (*dbContext.CreateCategoryParams)(&categoryWithProductDto.CreateCategoryDto))
+	if responseErr != nil {
+		repositories.RollbackTransaction(cs.repositoryManager)
+		return nil, responseErr
+	}
+	//second query statement
+	responseErr = cs.DeleteCategory(ctx, int64(response.CategoryID))
+	if responseErr != nil {
+		//when delete not succeed, transaction will rollback
+		repositories.RollbackTransaction(cs.repositoryManager)
+		return nil, responseErr
+	}
+	// if all statement ok, transaction will commit/save to db
+	repositories.CommitTransaction(cs.repositoryManager)
+
+	return nil, &models.ResponseError{
+		Message: "Data has been created",
+		Status:  http.StatusOK,
+	}
 }

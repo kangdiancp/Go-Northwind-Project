@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"codeid.northwind/models"
+	"codeid.northwind/models/features"
 	"codeid.northwind/repositories/dbContext"
 	"github.com/gin-gonic/gin"
 )
@@ -12,18 +13,23 @@ import (
 type CategoryRepository struct {
 	dbHandler   *sql.DB
 	transaction *sql.Tx
+	dbQueries   dbContext.Queries
 }
 
 func NewCategoryRepository(dbHandler *sql.DB) *CategoryRepository {
 	return &CategoryRepository{
 		dbHandler: dbHandler,
+		//add new fields
+		dbQueries: *dbContext.New(dbHandler),
 	}
 }
 
-func (cr CategoryRepository) GetListCategory(ctx *gin.Context) ([]*models.Category, *models.ResponseError) {
+func (cr CategoryRepository) GetListCategory(ctx *gin.Context, metadata *features.Metadata) ([]*models.Category, *models.ResponseError) {
 
-	store := dbContext.New(cr.dbHandler)
-	categories, err := store.ListCategories(ctx)
+	//replace store with object pointer dbQueries which define in constructor NewCategoryRepository
+	//store := dbContext.New(cr.dbHandler)
+
+	categories, err := cr.dbQueries.ListCategories(ctx, metadata)
 
 	listCategories := make([]*models.Category, 0)
 

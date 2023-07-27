@@ -10,7 +10,7 @@ type ServiceManager struct {
 // constructor
 func NewServiceManager(repoMgr *repositories.RepositoryManager) *ServiceManager {
 	return &ServiceManager{
-		CategoryService: *NewCategoryService(&repoMgr.CategoryRepository),
+		CategoryService: *NewCategoryService(repoMgr),
 		//ProductService: *NewProductService(&repoMgr.ProductCategory),
 	}
 }
