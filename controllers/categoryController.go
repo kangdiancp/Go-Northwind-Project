@@ -14,19 +14,36 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const ROLE_ADMIN = "admin"
+const ROLE_GUEST = "guest"
+
 type CategoryController struct {
 	categoryService *services.CategoryService
+	userService     *services.UsersService
 }
 
 // declare constructor
-func NewCategoryController(categoryService *services.CategoryService) *CategoryController {
+func NewCategoryController(serviceMgr *services.ServiceManager) *CategoryController {
 	return &CategoryController{
-		categoryService: categoryService,
+		categoryService: &serviceMgr.CategoryService,
+		userService:     &serviceMgr.UsersService,
 	}
 }
 
 // create method
 func (categoryController CategoryController) GetListCategory(ctx *gin.Context) {
+	// add authorization
+	accessToken := ctx.Request.Header.Get("Authorization")
+	auth, responseErr := categoryController.userService.AuthorizeUser(accessToken, []string{ROLE_ADMIN})
+	if responseErr != nil {
+		ctx.JSON(responseErr.Status, responseErr)
+		return
+	}
+
+	if !auth {
+		ctx.Status(http.StatusUnauthorized)
+		return
+	}
 
 	//add metadata to hold data from query parameter, use defaultquery
 	pageNo, _ := strconv.Atoi(ctx.DefaultQuery("pageNo", "0"))

@@ -20,6 +20,13 @@ func InitRouter(routers *gin.Engine, controllerMgr *controllers.ControllerManage
 		categoryRoute.DELETE("/:id", controllerMgr.CategoryController.DeleteCategory)
 	}
 
+	userRoute := routers.Group("/user")
+	{
+		userRoute.POST("/signup", controllerMgr.UsersController.Signup)
+		userRoute.POST("/signin", controllerMgr.UsersController.Signin)
+		userRoute.POST("/logout", controllerMgr.UsersController.Logout)
+	}
+
 	return routers
 
 }

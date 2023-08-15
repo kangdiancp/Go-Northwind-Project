@@ -7,28 +7,28 @@ import (
 
 func BeginTransaction(repoMgr *RepositoryManager) error {
 	ctx := context.Background()
-	transaction, err := repoMgr.dbHandler.BeginTx(ctx, &sql.TxOptions{})
+	transaction, err := repoMgr.CategoryRepository.dbHandler.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return err
 	}
 
-	repoMgr.transaction = transaction
+	repoMgr.CategoryRepository.transaction = transaction
 
 	return nil
 }
 
 func RollbackTransaction(repoManager *RepositoryManager) error {
-	transaction := repoManager.transaction
+	transaction := repoManager.CategoryRepository.transaction
 
-	repoManager.transaction = nil
+	repoManager.CategoryRepository.dbHandler = nil
 
 	return transaction.Rollback()
 }
 
 func CommitTransaction(repoManager *RepositoryManager) error {
-	transaction := repoManager.transaction
+	transaction := repoManager.CategoryRepository.transaction
 
-	repoManager.transaction = nil
+	repoManager.CategoryRepository.dbHandler = nil
 
 	return transaction.Commit()
 }

@@ -16,11 +16,11 @@ type CategoryRepository struct {
 	dbQueries   dbContext.Queries
 }
 
-func NewCategoryRepository(dbHandler *sql.DB) *CategoryRepository {
+func NewCategoryRepository(dbHAndler *sql.DB) *CategoryRepository {
 	return &CategoryRepository{
-		dbHandler: dbHandler,
+		dbHandler: dbHAndler,
 		//add new fields
-		dbQueries: *dbContext.New(dbHandler),
+		dbQueries: *dbContext.New(dbHAndler),
 	}
 }
 
